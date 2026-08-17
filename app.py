@@ -96,7 +96,7 @@ def check_password():
             text-decoration: none;
         }
         </style>
-    """, unsafe_allow_html=unsafe_allow_html)
+    """, unsafe_allow_html=True)
 
     # Centered Card Layout
     _, col2, _ = st.columns([1, 1.2, 1])
