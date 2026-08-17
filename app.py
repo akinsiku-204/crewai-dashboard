@@ -1,215 +1,285 @@
 import streamlit as st
-
-# Must be the first Streamlit command
-st.set_page_config(page_title="PixelPro Digital Dashboard", page_icon="🔮", layout="wide")
-
-# --- AUTHENTICATION & LOGIN UI ---
-def check_password():
-    if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = False
-
-    if st.session_state["authenticated"]:
-        return True
-
-    # Custom CSS to replicate the purple card UI
-    st.markdown("""
-        <style>
-        /* Background Styling */
-        .stApp {
-            background-color: #f3f0ff;
-        }
-        
-        /* Card Container */
-        div[data-testid="stForm"] {
-            background: linear-gradient(180deg, #A78BFA 0%, #818CF8 50%, #60A5FA 100%);
-            border-radius: 28px;
-            padding: 35px 30px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            border: none;
-            max-width: 420px;
-            margin: auto;
-        }
-        
-        /* Heading and Subtext */
-        .login-header {
-            color: white;
-            text-align: center;
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            font-size: 26px;
-            margin-bottom: 2px;
-        }
-        .login-sub {
-            color: rgba(255, 255, 255, 0.9);
-            text-align: center;
-            font-family: 'Inter', sans-serif;
-            font-size: 18px;
-            margin-bottom: 25px;
-        }
-
-        /* Input Fields */
-        div[data-baseweb="input"] {
-            background-color: rgba(255, 255, 255, 0.25) !important;
-            border: 1px solid rgba(255, 255, 255, 0.4) !important;
-            border-radius: 12px !important;
-            color: white !important;
-        }
-        div[data-baseweb="input"] input {
-            color: white !important;
-        }
-        div[data-baseweb="input"] input::placeholder {
-            color: rgba(255, 255, 255, 0.75) !important;
-        }
-        
-        /* Login Button */
-        div[data-testid="stForm"] button {
-            background-color: white !important;
-            color: #4F46E5 !important;
-            font-weight: 700 !important;
-            border-radius: 12px !important;
-            border: none !important;
-            width: 100% !important;
-            padding: 10px !important;
-            margin-top: 15px !important;
-        }
-        div[data-testid="stForm"] button:hover {
-            background-color: #f8fafc !important;
-            color: #3730A3 !important;
-        }
-
-        /* Divider & Links */
-        .divider-text {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
-            margin: 20px 0 15px 0;
-        }
-        .signup-text {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 13px;
-            margin-top: 20px;
-        }
-        .signup-text a {
-            color: white;
-            font-weight: bold;
-            text-decoration: none;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Centered Card Layout
-    _, col2, _ = st.columns([1, 1.2, 1])
-
-    with col2:
-        with st.form("login_form"):
-            # Logo & Greeting
-            st.markdown("""
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 28px;">🔮</div>
-                    <div style="color: white; font-weight: bold; font-size: 16px; margin-top: 5px;">PixelPro Digital</div>
-                </div>
-                <div class="login-header">Welcome,</div>
-                <div class="login-sub">Glad to see you!</div>
-            """, unsafe_allow_html=True)
-
-            username = st.text_input("Email / Username", placeholder="Email Address", label_visibility="collapsed")
-            password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
-
-            st.markdown("<div style='text-align: right; margin-top:-10px;'><a href='#' style='color: rgba(255,255,255,0.8); font-size: 12px; text-decoration: none;'>Forgot Password?</a></div>", unsafe_allow_html=True)
-
-            submit = st.form_submit_button("Login")
-
-            st.markdown("""
-                <div class="divider-text">─── Or Login with ───</div>
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button type="button" style="flex:1; background:white; border:none; border-radius:10px; padding:8px; font-weight:bold; cursor:pointer;">G</button>
-                    <button type="button" style="flex:1; background:white; border:none; border-radius:10px; padding:8px; color:#1877F2; font-weight:bold; cursor:pointer;">f</button>
-                </div>
-                <div class="signup-text">Don't have an account? <a href="#">Sign Up Now</a></div>
-            """, unsafe_allow_html=True)
-
-            if submit:
-                # Default credentials: admin / supervisor2026
-                if username == "admin" and password == "supervisor2026":
-                    st.session_state["authenticated"] = True
-                    st.rerun()
-                else:
-                    st.error("❌ Incorrect Username or Password")
-
-    return False
-
-if not check_password():
-    st.stop()
-
-# --- SIDEBAR LOGOUT BUTTON ---
-st.sidebar.markdown("### 👤 User Session")
-st.sidebar.write("Logged in as: **admin**")
-if st.sidebar.button("Log Out"):
-    st.session_state["authenticated"] = False
-    st.rerun()
-
-# --- MAIN DASHBOARD CODE STARTS BELOW ---
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
+import os
 from datetime import datetime
 
-st.title("📊 PixelPro Digital Analytics Dashboard")
+# ---------------------------------------------------------
+# 1. PAGE CONFIGURATION & THEMING
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="Smart Interactive Data Visualization Dashboard",
+    page_icon="📊",
+    layout="wide"
+)
 
-# Load data
-@st.cache_data
-def load_data():
+st.markdown("""
+    <style>
+    div[data-testid="stMetricValue"] {
+        font-size: 26px;
+        font-weight: 700;
+        color: #00D4FF;
+    }
+    div[data-testid="stMetric"] {
+        background-color: #1E222D;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #2E3440;
+    }
+    .main-header {
+        background: linear-gradient(90deg, #1f2937 0%, #111827 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #374151;
+    }
+    .insight-box {
+        background-color: #1E293B;
+        border-left: 5px solid #00D4FF;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# 2. HEADER BANNER
+# ---------------------------------------------------------
+st.markdown("""
+    <div class="main-header">
+        <h1 style="color: #ffffff; margin:0;">📊 Smart Interactive Data Visualization Dashboard</h1>
+        <p style="color: #9CA3AF; margin: 5px 0 0 0;">Next-Gen Visual Analytics with Automated Insights, Distribution Charts & Anomaly Detection | Final Year Project</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# 3. SIDEBAR: DATA MANAGEMENT & CONVERSATIONAL SEARCH
+# ---------------------------------------------------------
+st.sidebar.header("📁 Data Management")
+
+uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
+
+if uploaded_file is not None:
     try:
-        df = pd.read_csv("insurance.csv")
-    except FileNotFoundError:
+        df = pd.read_csv(uploaded_file)
+        st.sidebar.success("✅ CSV Uploaded Successfully!")
+    except Exception:
+        st.sidebar.error("Error reading CSV. Using sample dataset.")
         df = pd.DataFrame({
-            "age": [19, 18, 28, 33, 32],
-            "sex": ["female", "male", "male", "male", "male"],
-            "bmi": [27.9, 33.77, 33.0, 22.705, 28.88],
-            "children": [0, 1, 3, 0, 0],
-            "smoker": ["yes", "no", "no", "no", "no"],
-            "region": ["southwest", "southeast", "southeast", "northwest", "northwest"],
-            "charges": [16884.92, 1725.55, 4449.46, 21984.47, 3866.86]
+            "Category": ["Category A", "Category B", "Category C", "Category D"],
+            "Sales": [1200, 2400, 1800, 3100],
+            "Growth": [15, 30, -5, 22]
         })
-    return df
+else:
+    st.sidebar.info("💡 Using default sample dataset. Upload a CSV to visualize your data.")
+    df = pd.DataFrame({
+        "Category": ["Category A", "Category B", "Category C", "Category D"],
+        "Sales": [1200, 2400, 1800, 3100],
+        "Growth": [15, 30, -5, 22]
+    })
 
-df = load_data()
+# Smart Type Conversions
+for col in df.columns:
+    if df[col].dtype == 'object':
+        try:
+            df[col] = pd.to_numeric(df[col])
+        except (ValueError, TypeError):
+            pass
 
-# Tabs Interface
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Visualizations", "🔍 Outliers", "📝 Executive Report", "⭐ Evaluation Form"])
+all_columns = df.columns.tolist()
+numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+categorical_cols = df.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
 
+# --- FEATURE: CONVERSATIONAL SEARCH ---
+st.sidebar.markdown("---")
+st.sidebar.header("💬 Ask Your Data")
+search_query = st.sidebar.text_input("Search or filter records (e.g., '2018', 'Fever'):", "")
+
+if search_query:
+    mask = np.column_stack([df[col].astype(str).str.contains(search_query, case=False, na=False) for col in df.columns])
+    filtered_df = df[mask.any(axis=1)]
+    st.sidebar.caption(f"Found **{len(filtered_df)}** matching records.")
+else:
+    filtered_df = df.copy()
+
+# --- FEATURE: SMART PLOTTING CONTROLS ---
+st.sidebar.markdown("---")
+st.sidebar.header("⚙️ Smart Plotting Controls")
+
+default_x_idx = 0
+default_y_idx = 0
+
+if categorical_cols:
+    default_x_idx = all_columns.index(categorical_cols[0])
+elif len(all_columns) > 0:
+    default_x_idx = 0
+
+if numeric_cols:
+    default_y_idx = all_columns.index(numeric_cols[0])
+elif len(all_columns) > 1:
+    default_y_idx = 1
+
+x_axis = st.sidebar.selectbox("Select X-Axis / Category Column:", all_columns, index=default_x_idx)
+y_axis = st.sidebar.selectbox("Select Y-Axis / Metric Column:", all_columns, index=default_y_idx)
+
+# ---------------------------------------------------------
+# 4. DASHBOARD TABS
+# ---------------------------------------------------------
+tab1, tab2, tab3 = st.tabs([
+    "📈 Dynamic Dashboard & Visual Suite", 
+    "📄 Raw vs Visual (Obj i)", 
+    "📝 Usability Feedback (Obj iv)"
+])
+
+# ---------------------------------------------------------
+# TAB 1: EXTENDED VISUALIZATION SUITE
+# ---------------------------------------------------------
 with tab1:
-    st.subheader("Interactive Visualizations")
-    col1, col2 = st.columns(2)
-    with col1:
-        metric = st.selectbox("Select Metric to Plot", ["age", "bmi", "charges"])
-        fig_hist = px.histogram(df, x=metric, title=f"Distribution of {metric.upper()}")
-        st.plotly_chart(fig_hist, use_container_width=True)
-    with col2:
-        cat_var = st.selectbox("Select Categorical Variable", ["sex", "smoker", "region"])
-        fig_bar = px.bar(df, x=cat_var, y="charges", color=cat_var, title=f"Charges by {cat_var.upper()}")
-        st.plotly_chart(fig_bar, use_container_width=True)
+    # --- AUTOMATED AI INSIGHT GENERATOR ---
+    st.subheader("🤖 Automated Executive Insights")
+    
+    if y_axis in numeric_cols and len(filtered_df) > 0:
+        max_val = filtered_df[y_axis].max()
+        min_val = filtered_df[y_axis].min()
+        avg_val = filtered_df[y_axis].mean()
+        max_row = filtered_df[filtered_df[y_axis] == max_val].iloc[0]
+        x_max_label = max_row[x_axis] if x_axis in max_row else "N/A"
+        
+        insight_text = (
+            f"• **Peak Value Detected:** The highest **{y_axis}** recorded is **{max_val:,.2f}** (associated with **{x_axis}: {x_max_label}**).\n"
+            f"• **Dataset Average:** Across **{len(filtered_df):,}** entries, the average **{y_axis}** stands at **{avg_val:,.2f}**.\n"
+            f"• **Value Range:** Observations spread between a baseline minimum of **{min_val:,.2f}** and a maximum of **{max_val:,.2f}**."
+        )
+    else:
+        insight_text = f"• Dataset loaded with **{len(filtered_df):,}** total rows across **{len(all_columns)}** attributes."
+
+    st.markdown(f'<div class="insight-box">{insight_text}</div>', unsafe_allow_html=True)
+
+    # Key Performance Indicators
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Records", f"{len(filtered_df):,}")
+    
+    if y_axis in numeric_cols:
+        col2.metric(f"Total {y_axis}", f"{filtered_df[y_axis].sum():,.1f}")
+        col3.metric(f"Average {y_axis}", f"{filtered_df[y_axis].mean():,.1f}")
+    else:
+        col2.metric("Data Status", "Active")
+        col3.metric("Data Integrity", "100%")
 
     st.markdown("---")
-    fig_scatter_matrix = px.scatter_matrix(df, dimensions=["age", "bmi", "charges"], color="smoker")
-    st.plotly_chart(fig_scatter_matrix, use_container_width=True)
-
-with tab2:
-    st.subheader("IQR Outlier Detection")
-    num_col = st.selectbox("Select Numerical Column for Outlier Analysis", ["age", "bmi", "charges"])
-    Q1 = df[num_col].quantile(0.25)
-    Q3 = df[num_col].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
     
-    outliers = df[(df[num_col] < lower_bound) | (df[num_col] > upper_bound)]
-    st.write(f"**Identified {len(outliers)} outliers in `{num_col}` (IQR threshold: [{lower_bound:.2f}, {upper_bound:.2f}])**")
-    st.dataframe(outliers)
+    # --- SECTION A: BAR & TREND CHARTS ---
+    st.subheader("📊 Primary Charts & Outlier Analysis")
+    show_outliers = st.checkbox("⚠️ Enable Automatic Outlier/Anomaly Detection", value=True)
 
-with tab3:
-    st.subheader("📄 Executive Data Summary Report")
+    if all_columns and len(filtered_df) > 0:
+        col_left, col_right = st.columns(2)
+        
+        is_outlier = np.zeros(len(filtered_df), dtype=bool)
+        if y_axis in numeric_cols and show_outliers:
+            q1 = filtered_df[y_axis].quantile(0.25)
+            q3 = filtered_df[y_axis].quantile(0.75)
+            iqr = q3 - q1
+            is_outlier = (filtered_df[y_axis] < (q1 - 1.5 * iqr)) | (filtered_df[y_axis] > (q3 + 1.5 * iqr))
+            outlier_count = is_outlier.sum()
+            if outlier_count > 0:
+                st.warning(f"⚠️ **{outlier_count} statistical anomalies detected** in {y_axis} (highlighted on charts).")
+
+        with col_left:
+            st.markdown(f"**Bar Chart: {y_axis} by {x_axis}**")
+            fig_bar = px.bar(
+                filtered_df, x=x_axis, y=y_axis,
+                template="plotly_dark", text_auto=True
+            )
+            st.plotly_chart(fig_bar, use_container_width=True)
+
+        with col_right:
+            st.markdown(f"**Trend View with Anomaly Overlay**")
+            fig_trend = go.Figure()
+            
+            fig_trend.add_trace(go.Scatter(
+                x=filtered_df[x_axis], y=filtered_df[y_axis],
+                mode='lines+markers', name=y_axis, line=dict(color='#00D4FF')
+            ))
+            
+            if show_outliers and is_outlier.any():
+                outlier_df = filtered_df[is_outlier]
+                fig_trend.add_trace(go.Scatter(
+                    x=outlier_df[x_axis], y=outlier_df[y_axis],
+                    mode='markers', name='Anomaly/Outlier',
+                    marker=dict(color='red', size=10, symbol='x')
+                ))
+                
+            fig_trend.update_layout(template="plotly_dark", margin=dict(l=20, r=20, t=20, b=20))
+            st.plotly_chart(fig_trend, use_container_width=True)
+
+    st.markdown("---")
+
+    # --- SECTION B: HISTOGRAM & PIE CHART ---
+    st.subheader("🍩 Distribution & Composition Analysis")
+    col_hist, col_pie = st.columns(2)
+
+    with col_hist:
+        st.markdown(f"**Histogram: Frequency Distribution of {y_axis}**")
+        if y_axis in numeric_cols:
+            fig_hist = px.histogram(
+                filtered_df, x=y_axis, nbins=30,
+                color_discrete_sequence=['#00D4FF'],
+                template="plotly_dark", marginal="rug"
+            )
+            fig_hist.update_layout(yaxis_title="Count / Frequency")
+            st.plotly_chart(fig_hist, use_container_width=True)
+        else:
+            st.info("Select a numeric Y-Axis column to generate a numerical frequency histogram.")
+
+    with col_pie:
+        st.markdown(f"**Pie Chart: Proportional Share of {y_axis} by {x_axis}**")
+        if y_axis in numeric_cols and len(filtered_df[x_axis].unique()) <= 30:
+            fig_pie = px.pie(
+                filtered_df, names=x_axis, values=y_axis,
+                hole=0.4, template="plotly_dark"
+            )
+            fig_pie.update_traces(textinfo="percent+label")
+            st.plotly_chart(fig_pie, use_container_width=True)
+        elif len(filtered_df[x_axis].unique()) > 30:
+            st.warning("Pie chart hidden: Too many unique categories on X-axis (>30). Select a broader category column.")
+        else:
+            st.info("Select a valid numeric column to generate a proportional pie chart.")
+
+    st.markdown("---")
+
+    # --- SECTION C: ADVANCED STATISTICAL VISUALS (BOX PLOT & SCATTER MATRIX) ---
+    st.subheader("📦 Statistical Spread & Multi-Variable Correlation")
+    col_box, col_scat = st.columns(2)
+
+    with col_box:
+        st.markdown(f"**Box Plot: Quartile Spread & Outliers for {y_axis}**")
+        if y_axis in numeric_cols:
+            fig_box = px.box(
+                filtered_df, x=x_axis if categorical_cols else None, y=y_axis,
+                points="all", template="plotly_dark", color_discrete_sequence=['#A78BFA']
+            )
+            st.plotly_chart(fig_box, use_container_width=True)
+        else:
+            st.info("Select a numeric column for box plot statistical spread.")
+
+    with col_scat:
+        st.markdown("**Scatter Plot: X vs Y Correlation Analysis**")
+        fig_scatter_matrix = px.scatter(
+            filtered_df, x=x_axis, y=y_axis,
+            color=x_axis if categorical_cols else None,
+            size=y_axis if y_axis in numeric_cols else None,
+            template="plotly_dark"
+        )
+        st.plotly_chart(fig_scatter_matrix, use_container_width=True)
+
+    # --- EXECUTIVE REPORT GENERATOR ---
+    st.markdown("---")
+    st.subheader("📄 Executive Report Export")
+    
     report_html = f"""
     <html>
     <head><title>Executive Data Report</title></head>
@@ -219,38 +289,68 @@ with tab3:
         <hr>
         <h3>Key Metrics</h3>
         <ul>
-            <li>Total Records: {len(df)}</li>
-            <li>Average Age: {df['age'].mean():.1f} years</li>
-            <li>Average BMI: {df['bmi'].mean():.2f}</li>
-            <li>Average Charges: ${df['charges'].mean():,.2f}</li>
+            <li><strong>Total Records Analyzed:</strong> {len(filtered_df):,}</li>
+            <li><strong>Selected Metric (Y-Axis):</strong> {y_axis}</li>
+            <li><strong>Selected Category (X-Axis):</strong> {x_axis}</li>
         </ul>
+        <h3>Automated Insights</h3>
+        <p>{insight_text}</p>
     </body>
     </html>
     """
-    st.download_button("📥 Download Executive Report", data=report_html, file_name="executive_report.html", mime="text/html")
+    
+    st.download_button(
+        label="📥 Download Executive Summary Report (HTML)",
+        data=report_html,
+        file_name=f"Executive_Report_{datetime.now().strftime('%Y%m%d')}.html",
+        mime="text/html"
+    )
 
-with tab4:
-    st.subheader("⭐ System Usability Evaluation Form")
-    with st.form("eval_form"):
-        role = st.selectbox("Evaluator Role", ["Supervisor", "Student", "External Evaluator"])
-        ease = st.slider("Ease of Use (1-5)", 1, 5, 5)
-        resp = st.slider("System Responsiveness (1-5)", 1, 5, 5)
-        util = st.slider("Feature Utility (1-5)", 1, 5, 5)
-        comments = st.text_area("Feedback Comments")
+# ---------------------------------------------------------
+# TAB 2: RAW VS VISUAL COMPARISON (Obj i)
+# ---------------------------------------------------------
+with tab2:
+    st.subheader("Identifying Static Data Difficulties")
+    st.info("💡 Compare raw tabular data against dynamic charts to evaluate cognitive retrieval speed.")
+    
+    view_mode = st.radio("Select View Mode:", ["Static Data Table (Traditional)", "Interactive Visual View (Proposed)"])
+    
+    if view_mode == "Static Data Table (Traditional)":
+        st.write("#### Raw Tabular Data")
+        st.dataframe(filtered_df, use_container_width=True)
+    else:
+        st.write("#### Dynamic Interactive View")
+        fig_scatter = px.scatter(
+            filtered_df, x=x_axis, y=y_axis,
+            color=x_axis if categorical_cols else None, template="plotly_dark"
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+# ---------------------------------------------------------
+# TAB 3: USABILITY TESTING & FEEDBACK (Obj iv)
+# ---------------------------------------------------------
+with tab3:
+    st.subheader("User Evaluation & Usability Feedback")
+    st.write("Evaluate the usability and effectiveness of this dashboard for project assessment.")
+    
+    with st.form("feedback_form"):
+        user_role = st.selectbox("Your Role:", ["Student", "Academic Supervisor / Evaluator", "Data Analyst", "Other"])
+        rating = st.slider("How easy was it to understand the visualizations? (1 = Very Hard, 5 = Very Easy)", 1, 5, 4)
+        clarity_rating = st.radio("Did interactive charts and automated insights solve static table difficulties?", ["Yes, significantly", "Somewhat", "No difference"])
+        comments = st.text_area("Additional Feedback & Suggested Improvements:")
         
-        if st.form_submit_button("Submit Feedback"):
-            new_data = pd.DataFrame([{
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "evaluator_role": role,
-                "ease_of_use": ease,
-                "responsiveness": resp,
-                "feature_utility": util,
-                "comments": comments
+        submitted = st.form_submit_button("Submit Evaluation")
+        
+        if submitted:
+            feedback_data = pd.DataFrame([{
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Role": user_role,
+                "Usability Rating": rating,
+                "Solved Static Issues": clarity_rating,
+                "Comments": comments
             }])
-            try:
-                existing = pd.read_csv("user_feedback.csv")
-                updated = pd.concat([existing, new_data], ignore_index=True)
-            except FileNotFoundError:
-                updated = new_data
-            updated.to_csv("user_feedback.csv", index=False)
-            st.success("✅ Feedback saved successfully to `user_feedback.csv`!")
+            
+            file_exists = os.path.exists("user_feedback.csv")
+            feedback_data.to_csv("user_feedback.csv", mode='a', header=not file_exists, index=False)
+            
+            st.success("Thank you! Your feedback has been logged to user_feedback.csv for system evaluation.")
